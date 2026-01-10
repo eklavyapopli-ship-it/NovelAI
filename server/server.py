@@ -1,5 +1,7 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, WebSocket
 from rq_client.rq_client import queue
+import asyncio
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from worker import process
 
@@ -25,21 +27,31 @@ def reply(query:str = Query(...,description="User Query")):
     job = queue.enqueue(process,query)
     return {"status":"queued", "job_id":job.id}
 
-@app.get("/job-status")
-def getResult(job_id: str = Query(...)):
-    job = queue.fetch_job(job_id)
+@app.websocket("/job-status")
+async def getResult(websocket: WebSocket):
+    await websocket.accept()
+    data = await websocket.receive_text()
+    while True:
+        job = queue.fetch_job(data)
 
-    if not job:
-        return {"status": "not_found"}
+        if not job:
+            await websocket.send_json({"status":"not found"})
+            await websocket.close()
+            return
 
-    if job.is_finished:
-        return {
+        if job.is_finished:
+            await websocket.send_json({
             "status": "finished",
             "result": job.return_value()
-        }
+        })
+            await websocket.close()
+            return
 
-    if job.is_failed:
-        return {"status": "failed"}
+        if job.is_failed:
+            await websocket.send_json({"status": "failed"})
+            await websocket.close()
+            return
 
-    return {"status": job.get_status()}
+        await asyncio.sleep(1)
+
 

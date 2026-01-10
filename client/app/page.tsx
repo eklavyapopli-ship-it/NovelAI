@@ -30,24 +30,42 @@ export default function NovelAI() {
     }
   };
 
-  useEffect(() => {
-    if (!jobId) return;
+useEffect(() => {
+  if (!jobId) return;
 
-    const interval = setInterval(async () => {
-      const res = await fetch(
-        `http://0.0.0.0:8000/job-status?job_id=${jobId}`
-      );
-      const data = await res.json();
+  const ws = new WebSocket('ws://0.0.0.0:8000/job-status');
 
-      if (data.status === 'finished') {
-        setAnswer(data.result);
-        setLoading(false);
-        clearInterval(interval);
-      }
-    }, 1200);
+  ws.onopen = () => {
+    ws.send(jobId); // send job_id to backend
+  };
 
-    return () => clearInterval(interval);
-  }, [jobId]);
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.status === 'finished') {
+      setAnswer(data.result);
+      setLoading(false);
+      ws.close();
+    }
+
+    if (data.status === 'failed') {
+      setError('The archive failed to respond.');
+      setLoading(false);
+      ws.close();
+    }
+  };
+
+  ws.onerror = () => {
+    setError('WebSocket connection error.');
+    setLoading(false);
+    ws.close();
+  };
+
+  return () => {
+    ws.close();
+  };
+}, [jobId]);
+
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black text-zinc-200 flex items-center justify-center px-6">
