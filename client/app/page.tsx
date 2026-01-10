@@ -73,8 +73,9 @@ useEffect(() => {
 
         {/* Header */}
         <header className="text-center space-y-2">
+          <h1 className='text-6xl text-center font-serif text-amber-400'>LIBRIS </h1>
           <h1 className="text-4xl font-serif tracking-wide text-amber-400">
-            The Omniscient Novel AI
+           The Omniscient Novel AI
           </h1>
           <p className="text-sm text-zinc-400 italic">
             Keeper of plots, prose, characters, and forgotten stories

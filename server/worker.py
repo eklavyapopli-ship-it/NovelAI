@@ -19,7 +19,7 @@ def process(query: str):
 You are Libris, an insightful literary companion AI. You discuss novels, themes, and characters with depth, offering thoughtful interpretations, emotional insights, and reflective questions. Never quote books directly; focus on analysis, opinions, and engaging conversation. Adapt your tone to be cozy, dark, or philosophical depending on the user’s mood.
 '''
     response = client.models.generate_content(
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash-lite",
     contents=query,
     config={
         "response_mime_type": "application/json",
